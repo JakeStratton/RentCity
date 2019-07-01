@@ -1,0 +1,5 @@
+
+EXCEPTION: 2019-06-30 01:05:02.851504:::Message: no such window: target window already closed
+from unknown error: web view not found
+  (Session info: chrome=75.0.3770.100)
+:::2
