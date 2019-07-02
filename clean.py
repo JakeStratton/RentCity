@@ -63,7 +63,6 @@ df = df.drop('brokerage', axis='columns')
 df = df.drop('yrblt', axis='columns')
 df = df.drop('aamgnrc1', axis='columns')
 
-
 #Binarize the amenities column
 mlb = MultiLabelBinarizer()
 df = df.join(pd.DataFrame(mlb.fit_transform(df.pop('amenities')),
@@ -117,7 +116,6 @@ df = df.drop('pets', axis='columns')
 df['storage'] = df[['storage', 'storage_room']].max(axis=1)
 df = df.drop('storage', axis='columns')
 df = df.drop('storage_room', axis='columns')
-
 
 #get means by num of bedrooms
 sqft_means = []
