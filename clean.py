@@ -5,7 +5,7 @@ from sklearn.preprocessing import MultiLabelBinarizer
 
 # load data, but modify the amenities column so that it come in as a list, as opposed to a string
 generic = lambda x: x.strip('[').strip(']').replace(',', '').replace("'", '').split()
-conv = {'amenities': generic}
+conv = {'amenities': generic, 'hood': generic, 'boro': generic}
 df = pd.read_csv('rentals_info.csv', converters=conv)
 
 #only include rows that have a valid building id
@@ -29,6 +29,10 @@ for i in df['bd'].unique():
 #fill parking NaNs with 0, and parking trues with 1
 df['park'][df['park'] == 'true'] = 1
 df['park'] = df['park'].fillna(0)
+
+#fill broker fee yes' with 1, and no's with 0
+df['brokerfee'][df['brokerfee'] == 'yes'] = 1
+df['brokerfee'][df['brokerfee'] == 'no'] = 0
 
 #round off all floats
 df = df.round()   
@@ -63,9 +67,17 @@ df = df.drop('brokerage', axis='columns')
 df = df.drop('yrblt', axis='columns')
 df = df.drop('aamgnrc1', axis='columns')
 
-#Binarize the amenities column
+#Binarize the amenities, hood, and boro columns
 mlb = MultiLabelBinarizer()
 df = df.join(pd.DataFrame(mlb.fit_transform(df.pop('amenities')),
+                          columns=mlb.classes_,
+                          index=df.index))
+
+df = df.join(pd.DataFrame(mlb.fit_transform(df.pop('hood')),
+                          columns=mlb.classes_,
+                          index=df.index))
+
+df = df.join(pd.DataFrame(mlb.fit_transform(df.pop('boro')),
                           columns=mlb.classes_,
                           index=df.index))
 
@@ -104,18 +116,16 @@ df = df.drop('smoke_free', axis='columns')
 #combine redundant columns
 df['sublet'] = df[['sublet', 'sublets']].max(axis=1)
 df = df.drop('sublets', axis='columns')
-df = df.drop('sublet', axis='columns')
 df['doorman'] = df[['doorman', 'full_time_doorman', 'part_time_doorman']].max(axis=1)
-df = df.drop('doorman', axis='columns')
 df = df.drop('part_time_doorman', axis='columns')
 df = df.drop('full_time_doorman', axis='columns')
 df['pets'] = df[['cats', 'dogs', 'pets']].max(axis=1)
 df = df.drop('dogs', axis='columns')
 df = df.drop('cats', axis='columns')
-df = df.drop('pets', axis='columns')
 df['storage'] = df[['storage', 'storage_room']].max(axis=1)
-df = df.drop('storage', axis='columns')
 df = df.drop('storage_room', axis='columns')
+df['parking'] = df[['park', 'parking']].max(axis=1)
+df = df.drop('park', axis='columns')
 
 #get means by num of bedrooms
 sqft_means = []
