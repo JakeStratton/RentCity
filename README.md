@@ -42,6 +42,8 @@ After looking at the data, I believe the price is most closely related to sqft a
 </div>
 
 
+<iframe width="900" height="800" frameborder="0" scrolling="no" src="//plot.ly/~carlositoelperro/6.embed"></iframe>
+
 ## Modeling
 I started by using Lasso Regression to look for linear relationships.  I chose R2 as my error metric, and Lasso scored just  <b>.70</b> using the default alpha value.
 
