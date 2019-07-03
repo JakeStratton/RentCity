@@ -1,5 +1,5 @@
 # RentCity
-# Predicting NYC Rent Prices based on Apartment Features
+# Predicting NYC Rent Prices Based on Apartment Features
 ### 
 ## Background
 I recently had to find an apartment in NYC, which is a difficult process compared to most other cities.  High rents, broker fees, and being on the market for only days makes the process extremely difficult.  I decided it would be handy to know if an apartment is fairly priced by being able to predict the rent for an apartment based on features such as nighborhood, sqft, and amenities. 
