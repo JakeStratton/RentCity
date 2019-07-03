@@ -223,8 +223,14 @@ def price_hist():
     ax.set_title('Prices of Available Apartments - No Outliers')
     plt.show()
 
-def price_per_boro():
-    ax = plt.bar(df['boro'],df['price'])
+def price_per_beds():
+    df = pd.DataFrame(sqft_means) 
+    ax = plt.bar(df[0],df[1])
+    ax.xlabel('Bedrooms')
+    ax.ylabel('Mean Price')
+    ax.title('Mean Prices by Number of Bedrooms')
+    plt.show()
+    
 
 def scatter_price_sqft_boro():
     boros = np.unique(df['boro'].values).tolist() 
