@@ -370,6 +370,7 @@ def price_sqft_scatter_boro_color():
                 hovermode= 'closest',
                 yaxis = dict(zeroline = False, title = 'Price'
                 ),
+                autosize=True,
                 xaxis = dict(zeroline = False, title = 'sqft'),
                 showlegend= True)
 
@@ -568,8 +569,8 @@ def boros_horz_bar():
 
         layout['annotations'] = annotations
 
-
-        fig = go.Figure(data=[trace0], layout=layout)
+        fig = dict(data=[trace0], layout=layout)
+        #fig = go.Figure(data=[trace0], layout=layout)
 
         fig['layout'].update(layout)
         py.iplot(fig, filename='boro_horz_bar_price_ranked.html')
