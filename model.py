@@ -141,7 +141,7 @@ def plot_residuals():
     fig = dict(data=data, layout=layout)
 
     # Plot
-    plotly.offline.plot(fig, filename='rf_results.html')
+    py.iplot(fig, filename='rf_results.html')
 
 #plot feature importances
 def plot_feature_importances():
@@ -159,7 +159,7 @@ def plot_feature_importances():
     fig = dict(data=data, layout=layout)
 
     # Plot 
-    plotly.offline.plot(fig, filename='feature_importances.html')
+    py.iplot(fig, filename='feature_importances.html')
     
 
 '''

@@ -284,7 +284,7 @@ def scatter_price_sqft_boro():
     )
 
     fig1 = dict(data=[trace1], layout=layout)
-    plotly.offline.plot(fig1, filename='splom_price_sqft_boro.html')
+    py.iplot(fig1, filename='splom_price_sqft_boro.html')
 
 
 def price_sqft_scatter_boro_color():
@@ -374,7 +374,7 @@ def price_sqft_scatter_boro_color():
                 showlegend= True)
 
         fig = dict(data=data, layout=layout)
-        plotly.offline.plot(fig, filename='scatter_price_sqft_color_boro.html')
+        py.iplot(fig, filename='scatter_price_sqft_color_boro.html')
 
 
 def top_hoods_horz_bar():
@@ -473,7 +473,7 @@ def top_hoods_horz_bar():
         fig = go.Figure(data=[trace0], layout=layout)
 
         fig['layout'].update(layout)
-        plotly.offline.plot(fig, filename='hood_horz_bar_price_ranked.html')
+        py.iplot(fig, filename='hood_horz_bar_price_ranked.html')
 
 
 def boros_horz_bar():
@@ -572,6 +572,6 @@ def boros_horz_bar():
         fig = go.Figure(data=[trace0], layout=layout)
 
         fig['layout'].update(layout)
-        plotly.offline.plot(fig, filename='boro_horz_bar_price_ranked.html')
-
+        py.iplot(fig, filename='boro_horz_bar_price_ranked.html')
+        
                 
