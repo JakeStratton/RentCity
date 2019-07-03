@@ -1,67 +1,108 @@
-import os
-import time
-import random
-import json
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+import plotly.plotly as py
+import plotly.graph_objs as go
+from plotly import tools
 
-# chrome_options = Options()
-# chrome_options.add_argument("--headless")
+import numpy as np
 
-# driver = webdriver.Chrome(chrome_options=chrome_options)
-driver = webdriver.Firefox()
-base_url = 'https://streeteasy.com/for-sale/nyc?page='
+df_mean_price_hood = pd.DataFrame()
+df_mean_price_hood[['hood', 'price']] = df[['hood', 'price']]
+'''
 
-def get_page(page=1):
-    # use selenium with chromedriver to get dynamic JS page.  requests library won't wait for JS.
-    chromedriver = "~/Downloads/chromedriver" # path to the chromedriver executable
-    chromedriver = os.path.expanduser(chromedriver)
-    print('chromedriver path: {}'.format(chromedriver))
-    sys.path.append(chromedriver)
-    driver = webdriver.Chrome(chromedriver)
+df_mean_price_hood = df_mean_price_hood.reset_index()
+df_mean_price_hood = df_mean_price_hood.drop('index', axis='columns')
+'''
 
-    driver.get(base_url + str(page))
-    time.sleep(60)
-    items = []
-    listings = driver.find_elements_by_css_selector('article.item')
-    for listing in listings:
-        item = {
-            'address': listing.find_element_by_css_selector('.details-title a').text,
-            'id': listing.find_element_by_css_selector('.details-title a').get_attribute('data-gtm-listing-id'),
-            'url': listing.find_element_by_css_selector('.details-title a').get_attribute('href'),
-            'price':  listing.find_element_by_css_selector('.price').text,
-            'monthly':  listing.find_element_by_css_selector('.monthly_payment').text,
-            'details': [d.text.strip() for d in listing.find_elements_by_css_selector('ul.details_info li, li.details_info')],
-            'location': listing.get_attribute('se:map:point'),
-            'payment_details': {}
-        }
+hoods = df['hood'].unique().tolist()  
+y = []
+x = []
 
-        try:
-            payment_details = listing.find_element_by_css_selector('.EstimateCalculator').get_attribute('se:monthly_payment:attributes')
-            payment_details = json.loads(payment_details)
-            item['payment_details'] = payment_details
-        except:
-            pass
-
-        items.append(item)
-
-    return items
+for hood in hoods:
+        hood_mean = df_mean_price_hood['price'][df_mean_price_hood['hood'] == hood].mean()
+        hood_mean = np.round(hood_mean, decimals=0)
+        y.append(hood_mean)
+        x.append(hood)
 
 
-def get_all(total_pages=10, start_page=1):
-    items = []
-    for i in range(start_page, total_pages):
-        try:
-            _items = get_page(i)
-        except Exception as e:
-            print(e)
-            _items = []
-        items += _items
-        print(len(items))
-        with open('apartments.json', 'w') as outfile:
-            json.dump(items, outfile, indent=2)
-        time.sleep(random.randint(1, 4))
+df_mean_price_hood = pd.DataFrame({'mean_price': y, 'hood': x})
+df_mean_price_hood = df_mean_price_hood.sort_values('mean_price', ascending=False).head(20)
+yy = df_mean_price_hood['mean_price'].tolist()
+xx = df_mean_price_hood['hood'].tolist()
 
 
-if __name__ == '__main__':
-    get_all(1064, start_page=738)
+trace0 = go.Bar(
+    x = df_mean_price_hood['mean_price'],
+    y = df_mean_price_hood['hood'],
+    marker=dict(
+        color='rgba(50, 171, 96, 0.6)',
+        line=dict(
+            color='rgba(50, 171, 96, 1.0)',
+            width=1),
+    ),
+    name='Mean Price',
+    orientation='h',
+)
+
+layout = dict(
+    title='Mean Price by Neighborhood',
+    yaxis=dict(
+        showgrid=False,
+        showline=False,
+        showticklabels=True,
+        domain=[0, 0.85],
+    ),
+    xaxis=dict(
+        zeroline=False,
+        showline=False,
+        showticklabels=True,
+        showgrid=True,
+        title='Mean Price',
+        domain=[0, 0.42],
+    ),
+    legend=dict(
+        x=0.029,
+        y=1.038,
+        font=dict(
+            size=10,
+        ),
+    ),
+    margin=dict(
+        l=100,
+        r=20,
+        t=70,
+        b=70,
+    ),
+    paper_bgcolor='rgb(248, 248, 255)',
+    plot_bgcolor='rgb(248, 248, 255)',
+)
+
+annotations = []
+
+y_s = np.round(yy, decimals=2)
+
+# Adding labels
+for yd, xd in zip(y_s, xx):
+    # labeling the bar 
+    annotations.append(dict(xref='x1', yref='y1',
+                            y=xd, x=yd + 3,
+                            text=str(yd),
+                            font=dict(family='Arial', size=12,
+                                      color='rgb(50, 171, 96)'),
+                            showarrow=False))
+# Source
+annotations.append(dict(xref='paper', yref='paper',
+                        x=-0.2, y=-0.109,
+                        text='streeteast.com (Collected June 28-30 2019)',
+                        font=dict(family='Arial', size=10,
+                                  color='rgb(150,150,150)'),
+                        showarrow=False))
+
+layout['annotations'] = annotations
+
+
+fig = go.Figure(data=[trace0], layout=layout)
+
+fig['layout'].update(layout)
+plotly.offline.plot(fig, filename='hood_horz_bar_price_ranked.html')
+
+
+        

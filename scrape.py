@@ -31,7 +31,7 @@ def get_rental_info(urls):
      print('chromedriver path: {}'.format(chromedriver))
      sys.path.append(chromedriver)
      driver = webdriver.Chrome(chromedriver)
-     rentals_info = []
+     #rentals_info = []
 
 
      # open log file
@@ -60,8 +60,8 @@ def get_rental_info(urls):
                rental_info = [x.replace(');', '') for x in rental_info]
                rental_info = ','.join(rental_info) 
                rental_info = '{' + rental_info + '}'
-               rental_info = [rental_info]
-               rentals_info = rentals_info + rental_info
+               rentals_info = [rental_info]
+               #rentals_info = rentals_info + rental_info
 
           except Exception as e:
                result = str(idx) + str(datetime.now()) + ':::' + str(e) + ':::' + str(url)

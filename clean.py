@@ -2,6 +2,19 @@ import pandas as pd
 import numpy as np 
 import ast
 from sklearn.preprocessing import MultiLabelBinarizer
+import matplotlib.pyplot as plt
+import matplotlib
+from scipy import stats
+import plotly.graph_objs as go
+import plotly.plotly as py
+import plotly.tools as tls
+import plotly.figure_factory as ff
+import copy
+import plotly
+import plotly.graph_objs as go
+
+
+matplotlib.style.use('seaborn')
 
 # load data, but modify the amenities column so that it come in as a list, as opposed to a string
 generic = lambda x: x.strip('[').strip(']').replace(',', '').replace("'", '').split()
@@ -73,13 +86,17 @@ df = df.join(pd.DataFrame(mlb.fit_transform(df.pop('amenities')),
                           columns=mlb.classes_,
                           index=df.index))
 
-df = df.join(pd.DataFrame(mlb.fit_transform(df.pop('hood')),
+df = df.join(pd.DataFrame(mlb.fit_transform(df['hood']),
                           columns=mlb.classes_,
                           index=df.index))
 
-df = df.join(pd.DataFrame(mlb.fit_transform(df.pop('boro')),
+df = df.join(pd.DataFrame(mlb.fit_transform(df['boro']),
                           columns=mlb.classes_,
                           index=df.index))
+
+#clean boro and hood columns (list to string)
+df['boro'] = [','.join(map(str, l)) for l in df['boro']]
+df['hood'] = [','.join(map(str, l)) for l in df['hood']]
 
 #drop unneded binary columns (includes features that 
 # are the same across the entire building, because building ID 
@@ -127,7 +144,297 @@ df = df.drop('storage_room', axis='columns')
 df['parking'] = df[['park', 'parking']].max(axis=1)
 df = df.drop('park', axis='columns')
 
+#reset index
+df = df.reset_index()
+
+#EDA
+
 #get means by num of bedrooms
 sqft_means = []
 for i in df['bd'].unique():
     sqft_means.append((i, df['sqft'][df['bd'] == i].mean()))
+
+#identify price outliers, using z-score with a threshold of 3
+z = np.abs(stats.zscore(df['price']))
+threshold = 3 
+outliers = np.where(z >= 3)
+outliers = outliers[0].tolist()
+df = df.drop(df.index[outliers])
+
+#reset index
+df = df.reset_index()
+
+#make plots
+
+# make price hist, less than 10k only
+def price_hist_lessthan10k():
+    ax = df['price'][df['price'] <= 10000].hist(bins=100, edgecolor='black')
+    ax.set_xlabel('Rent')
+    ax.set_ylabel('Apartments')
+    ax.set_title('Prices of Available Apartments - Below $10k')
+    plt.show()
+
+def price_hist_morethan10k():
+    ax = df['price'][df['price'] > 10000].hist(bins=100, edgecolor='black')    
+    ax.set_xlabel('Rent')
+    ax.set_ylabel('Apartments')
+    ax.set_title('Prices of Available Apartments - Above $10k')
+    plt.show()
+
+def price_hist():
+    ax = df['price'].hist(bins=100, edgecolor='black')    
+    ax.set_xlabel('Rent')
+    ax.set_ylabel('Apartments')
+    ax.set_title('Prices of Available Apartments - No Outliers')
+    plt.show()
+
+def price_per_boro():
+    ax = plt.bar(df['boro'],df['price'])
+
+def scatter_price_sqft_boro():
+    boros = np.unique(df['boro'].values).tolist() 
+    boros_code = {boros[k]: k for k in range(5)}
+    color_vals = [boros_code[cl] for cl in df['boro']] 
+    pl_colorscale=[[0.0, 'red'],
+                [0.2, 'red'],
+                [0.2, 'blue'],
+                [0.4, 'blue'],
+                [0.4, 'green'],
+                [0.6, 'green'],
+                [0.6, 'yellow'],
+                [0.8, 'yellow'],
+                [0.8, 'purple'],
+                [1, 'purple']]
+    text = [df.loc[k, 'boro'] for k in range(len(df))]
+    trace1 = go.Splom(dimensions=[dict(label='sqft',
+                                    values=df['sqft']),
+                            dict(label='price',
+                                    values=df['price'])],
+                text=text,
+                #default axes name assignment :
+                #xaxes= ['x1','x2',  'x3'],
+                #yaxes=  ['y1', 'y2', 'y3'], 
+                marker=dict(color=color_vals,
+                            size=7,
+                            colorscale=pl_colorscale,
+                            showscale=False,
+                            line=dict(width=0.5,
+                                        color='rgb(230,230,230)'))
+                )
+
+    #trace1['diagonal'].update(visible=False)
+    #trace1['showupperhalf']=False
+
+    axis = dict(showline=True,
+            zeroline=False,
+            gridcolor='#fff',
+            ticklen=4)
+
+    layout = go.Layout(
+        title='Price vs Sqft',
+        dragmode='select',
+        width=900,
+        height=900,
+        autosize=True,
+        hovermode='closest',
+        plot_bgcolor='rgba(240,240,240, 0.95)',
+        xaxis1=dict(axis),
+        yaxis1=dict(axis)
+    )
+
+    fig1 = dict(data=[trace1], layout=layout)
+    plotly.offline.plot(fig1, filename='splom_price_sqft_boro.html')
+
+
+def price_sqft_scatter_boro_color():
+        trace0 = go.Scatter(
+        x = df['sqft'][df['boro'] == 'manhattan'],
+        y = df['price'][df['boro'] == 'manhattan'],
+        name = 'Manhattan',
+        mode = 'markers',
+        marker = dict(
+                size = 10,
+                color = 'green',
+                line = dict(
+                width = 2,
+                color = 'rgb(0, 0, 0)'
+                )
+        )
+        )
+
+        trace1 = go.Scatter(
+        x = df['sqft'][df['boro'] == 'brooklyn'],
+        y = df['price'][df['boro'] == 'brooklyn'],
+        name = 'Brooklyn',
+        mode = 'markers',
+        marker = dict(
+                size = 10,
+                color = 'blue',
+                line = dict(
+                width = 2,
+                color = 'rgb(0, 0, 0)'
+                )
+        )
+        )
+
+        trace2 = go.Scatter(
+        x = df['sqft'][df['boro'] == 'bronx'],
+        y = df['price'][df['boro'] == 'bronx'],
+        name = 'Bronx',
+        mode = 'markers',
+        marker = dict(
+                size = 10,
+                color = 'red',
+                line = dict(
+                width = 2,
+                color = 'rgb(0, 0, 0)'
+                )
+        )
+        )
+
+        trace3 = go.Scatter(
+        x = df['sqft'][df['boro'] == 'queens'],
+        y = df['price'][df['boro'] == 'queens'],
+        name = 'Queens',
+        mode = 'markers',
+        marker = dict(
+                size = 10,
+                color = 'yellow',
+                line = dict(
+                width = 2,
+                color = 'rgb(0, 0, 0)'
+                )
+        )
+        )
+
+        trace4 = go.Scatter(
+        x = df['sqft'][df['boro'] == 'staten-island'],
+        y = df['price'][df['boro'] == 'staten-island'],
+        name = 'Staten Island',
+        mode = 'markers',
+        marker = dict(
+                size = 10,
+                color = 'purple',
+                line = dict(
+                width = 2,
+                color = 'rgb(0, 0, 0)'
+                )
+        )
+        )
+
+        data = [trace0, trace1, trace2, trace3, trace4]
+
+        layout = dict(title = 'Price vs. Sqft',
+                hovermode= 'closest',
+                yaxis = dict(zeroline = False, title = 'Price'
+                ),
+                xaxis = dict(zeroline = False, title = 'sqft'),
+                showlegend= True)
+
+        fig = dict(data=data, layout=layout)
+        plotly.offline.plot(fig, filename='scatter_price_sqft_color_boro.html')
+
+
+def top_hoods_horz_bar():
+        df_mean_price_hood = pd.DataFrame()
+        df_mean_price_hood[['hood', 'price']] = df[['hood', 'price']]
+        '''
+
+        df_mean_price_hood = df_mean_price_hood.reset_index()
+        df_mean_price_hood = df_mean_price_hood.drop('index', axis='columns')
+        '''
+
+        hoods = df['hood'].unique().tolist()  
+        y = []
+        x = []
+
+        for hood in hoods:
+                hood_mean = df_mean_price_hood['price'][df_mean_price_hood['hood'] == hood].mean()
+                hood_mean = int(np.round(hood_mean, decimals=0))
+                y.append(hood_mean)
+                x.append(hood)
+
+
+        df_mean_price_hood = pd.DataFrame({'mean_price': y, 'hood': x})
+        df_mean_price_hood = df_mean_price_hood.sort_values('mean_price', ascending=False).head(20)
+        yy = df_mean_price_hood['mean_price'].tolist()
+        xx = df_mean_price_hood['hood'].tolist()
+
+
+        trace0 = go.Bar(
+        x = df_mean_price_hood['mean_price'],
+        y = df_mean_price_hood['hood'],
+        marker=dict(
+                color='rgba(50, 171, 96, 0.6)',
+                line=dict(
+                color='rgba(50, 171, 96, 1.0)',
+                width=1),
+        ),
+        name='Mean Price',
+        orientation='h',
+        )
+
+        layout = dict(
+        title='Mean Price by Neighborhood',
+        yaxis=dict(
+                showgrid=False,
+                showline=False,
+                showticklabels=True,
+                domain=[0, 0.85],
+        ),
+        xaxis=dict(
+                zeroline=False,
+                showline=False,
+                showticklabels=True,
+                showgrid=True,
+                title='Mean Price',
+                domain=[0, 0.42],
+        ),
+        legend=dict(
+                x=0.029,
+                y=1.038,
+                font=dict(
+                size=10,
+                ),
+        ),
+        margin=dict(
+                l=100,
+                r=20,
+                t=70,
+                b=70,
+        ),
+        paper_bgcolor='rgb(248, 248, 255)',
+        plot_bgcolor='rgb(248, 248, 255)',
+        )
+
+        annotations = []
+
+        y_s = np.round(yy, decimals=2)
+
+        # Adding labels
+        for yd, xd in zip(yy, xx):
+                # labeling the bar 
+                annotations.append(dict(xref='x1', yref='y1',
+                                        y=xd, x=yd + 3,
+                                        text = str('           ' + str(yd)),
+                                        font=dict(family='Arial', size=12,
+                                                color='rgb(50, 171, 96)'),
+                                        showarrow=False))
+        # Source
+        annotations.append(dict(xref='paper', yref='paper',
+                                x=-0.2, y=-0.109,
+                                text='                                                                                       www.streeteasy.com (Collected June 28-30 2019)',
+                                font=dict(family='Arial', size=10,
+                                        color='rgb(150,150,150)'),
+                                showarrow=False))
+
+        layout['annotations'] = annotations
+
+
+        fig = go.Figure(data=[trace0], layout=layout)
+
+        fig['layout'].update(layout)
+        plotly.offline.plot(fig, filename='hood_horz_bar_price_ranked.html')
+
+
+        
