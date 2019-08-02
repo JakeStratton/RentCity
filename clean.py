@@ -109,7 +109,7 @@ df['hood'] = [','.join(map(str, l)) for l in df['hood']]
 
 # drop rows with '' as hood
 indexNameshood = df[df['hood'] == ''].index
-df = df.drop(indexNameshood)
+df = df.drop(indexNameshood) #js
 
 #drop unneded binary columns (includes features that 
 # are the same across the entire building, because building ID 

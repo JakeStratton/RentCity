@@ -61,7 +61,7 @@ def get_rental_info(urls):
                rental_info = ','.join(rental_info) 
                rental_info = '{' + rental_info + '}'
                rentals_info = [rental_info]
-               #rentals_info = rentals_info + rental_info
+               #rentals_info = rentals_info + rental_info#
 
           except Exception as e:
                result = str(idx) + str(datetime.now()) + ':::' + str(e) + ':::' + str(url)

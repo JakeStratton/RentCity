@@ -53,7 +53,7 @@ def random_forest():
     rf_regr = RandomForestRegressor(max_depth=48, random_state=0, n_estimators=200)
     rf_regr.fit(X_train_scaled, y_train)
     print(rf_regr.feature_importances_)
-    print(rf_regr.predict(X_train_scaled))
+    print(rf_regr.predict(X_test_scaled))
     print("R2 Score -", rf_regr.score(X_test_scaled, y_test))
 
     return rf_regr
